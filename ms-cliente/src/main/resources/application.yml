@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: ms-cliente
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9000
+          audiences: web-app
+
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/reto-tecnico
+    username: myuser
+    password: secret
+
+  sql:
+    init:
+      mode: never
+
+
+logging:
+  include-application-name: false
+  level:
+    org.springframework.security: TRACE
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+
+server:
+  port: 8082

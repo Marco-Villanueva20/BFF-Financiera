@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/auth
+    username: myuser
+    password: secret
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: always #si es el primer inicio poner always
+      schema-locations: classpath:org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql
+
+server:
+  port: 9000
+
+
+

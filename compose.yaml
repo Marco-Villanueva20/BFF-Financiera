@@ -1,0 +1,12 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    container_name: postgres-reto
+    environment:
+      - 'POSTGRES_DB=reto-tecnico'
+      - 'POSTGRES_PASSWORD=secret'
+      - 'POSTGRES_USER=myuser'
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./init-db:/docker-entrypoint-initdb.d

@@ -1,0 +1,60 @@
+openapi: 3.0.4
+info:
+  title: MS Clientes API
+  version: 0.0.1
+  description: Este es un API REST para MS Clientes.
+  contact:
+    name: API Support
+    email: marcox12305@gmail.com
+
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: http://localhost:8082/api/v1
+    description: Url del servidor api desarrollo
+tags:
+  - name: Clientes
+    description: Centralizará las operaciones relacionadas con los clientes 
+paths:
+  /clientes:
+    get:
+      tags: [Clientes]
+      summary: Obtener todos los clientes
+      description: Esta petición pide todos los clientes del sistema
+      operationId: obtenerClientes
+      responses:
+        '200':
+          description: Operación exitosa
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClienteResponse'
+                
+components:
+  schemas:
+    TipoDocumento:
+      type: string
+      enum:
+        - DNI
+        - CE
+    ClienteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        nombres:
+          type: string
+        apellidos:
+          type: string
+        tipoDocumento:
+          $ref: '#/components/schemas/TipoDocumento'
+        
+
+

@@ -1,0 +1,328 @@
+openapi: 3.0.4
+info:
+  title: CUENTAS FINANCIEROS API
+  description: Este proyecto se dedica a la creación de cuentas como Tarjeta de Crédito o Cuenta de Ahorro relacionado a
+    un cliente
+  version: 0.0.1
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Servidor de desarrollo local
+  - url: https://algundialodesplegare.com/ms-cuentas
+    description: Entorno de producción
+tags:
+  - name: CuentasAhorro
+    description: Operaciones sobre cuentas de ahorro
+  - name: TarjetasCredito
+    description: Operaciones sobre tarjetas de crédito
+  - name: Cuentas
+    description: Gestión general de cuentas financieras
+security:
+  - bearerAuth: []
+paths:
+  /cuentas:
+    get:
+      tags:
+        - Cuentas
+      operationId: obtenerCuentas
+      summary: Obtiene todas las cuentas
+      description: Retorna una lista general de cuentas en el sistema
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CuentaResponse'
+
+  /cuentas/{clienteId}:
+    get:
+      tags:
+        - Cuentas
+      operationId: obtenerCuentasPorClienteId
+      summary: Obtiene todas las cuentas por el id del cliente
+      description: Permite consultar todas las cuentas asociadas a un cliente
+      parameters:
+        - name: clienteId
+          in: path
+          description: Identificador único del cliente (UUID)
+          required: true
+          schema:
+            type: string 
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CuentaResponse'
+
+  /cuentas-ahorro:
+    post:
+      tags:
+        - CuentasAhorro
+      operationId: agregarCuentaAhorro
+      summary: Agrega una nueva cuenta de ahorro
+      description: Se debe enviar un requisito para la creación de una cuenta de ahorro
+      requestBody:
+        description: Datos para crear una cuenta de ahorro
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CuentaAhorroRequest'
+      responses:
+        '201':
+          description: Cuenta de ahorro creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaAhorroResponse'
+    get:
+      tags:
+        - CuentasAhorro
+      operationId: listarCuentasAhorro
+      summary: Obtiene la lista completa de cuentas de ahorro
+      description: Retorna una lista detallada de todas las cuentas de ahorro vinculadas al sistema.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CuentaAhorroResponse'
+
+  /cuentas-ahorro/{clienteId}:
+    get:
+      tags:
+        - CuentasAhorro 
+      operationId: obtenerCuentaAhorroPorClienteId
+      summary: Obtiene una cuenta de ahorro por id de cliente
+      description: Permite consultar una cuenta de ahorro asociada al id del cliente
+      parameters:
+        - name: clienteId
+          in: path 
+          description: Identificador único del cliente (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CuentaAhorroResponse'
+      
+
+  /cuentas-ahorro/{id}:
+    get:
+      tags:
+        - CuentasAhorro
+      operationId: obtenerCuentaAhorroPorId
+      summary: Obtiene una cuenta de ahorro por id
+      description: Permite consultar una cuenta de ahorro asociada a su id
+      parameters:
+        - name: id
+          in: path
+          description: Identificador único de la cuenta (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid 
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuentaAhorroResponse'
+        '404':
+          description: No se encontró la cuenta de ahorro
+
+  /tarjetas-credito:
+    post:
+      tags:
+      - TarjetasCredito
+      operationId: agregarTarjetaCredito
+      summary: Agrega una nueva tarjeta de crédito
+      description: Se debe enviar un requisito para la creación de una tarjeta de crédito
+      requestBody:
+        description: Datos para crear una tarjeta de crédito
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TarjetaCreditoRequest'
+      responses:
+        '201':
+          description: Tarjeta de crédito creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TarjetaCreditoResponse'
+    get:
+      tags:
+      - TarjetasCredito
+      operationId: obtenerTarjetasCredito
+      summary: Obten tarjetas de crédito
+      description: Se deve de enviar una peticion para la devolución de tarjetas de crédito
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TarjetaCreditoResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TipoCuenta:
+      type: string
+      enum:
+      - CUENTA_AHORRO
+      - TARJETA_CREDITO
+      
+    CuentaRequest:
+      type: object
+      properties:
+        clienteId:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        nombre:
+          type: string
+          example: Cuenta de Ahorro
+        tipoCuenta:
+          $ref: '#/components/schemas/TipoCuenta'
+        saldo:
+          type: number
+          format: decimal
+          example: 1550.0
+          minimum: 0
+      required:
+      - clienteId
+      - nombre
+      - saldo
+      discriminator:
+        propertyName: tipoCuenta
+        mapping:
+          CUENTA_AHORRO: '#/components/schemas/CuentaAhorroRequest'
+          TARJETA_CREDITO: '#/components/schemas/TarjetaCreditoRequest'
+          
+    CuentaResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clienteId:
+          type: string
+          format: uuid
+        tipoCuenta:
+          $ref: '#/components/schemas/TipoCuenta'
+        nombre:
+          type: string
+        saldo:
+          type: number
+          format: decimal
+      discriminator:
+        propertyName: tipoCuenta
+        mapping:
+          CUENTA_AHORRO: '#/components/schemas/CuentaAhorroResponse'
+          TARJETA_CREDITO: '#/components/schemas/TarjetaCreditoResponse'
+
+    CuentaAhorroRequest:
+      allOf:
+      - $ref: '#/components/schemas/CuentaRequest'
+      - type: object
+        properties:
+          plazoMeses:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 12
+          tasaInteres:
+            type: number
+            format: decimal
+            minimum: 0
+            maximum: 1
+            example: 0.5
+          fechaApertura:
+            type: string
+            format: date
+        required:
+        - fechaApertura
+        - plazoMeses
+        - tasaInteres
+    CuentaAhorroResponse:
+      allOf:
+      - $ref: '#/components/schemas/CuentaResponse'
+      - type: object
+        properties:
+          cuentaId:
+            type: string
+            format: uuid
+          plazoMeses:
+            type: integer
+          tasaInteres:
+            type: number
+          fechaApertura:
+            type: string
+            format: date
+
+    TarjetaCreditoRequest:
+      allOf:
+      - $ref: '#/components/schemas/CuentaRequest'
+      - type: object
+        properties:
+          numeroTarjeta:
+            type: string
+          cvv:
+            type: string
+          fechaExpiracion:
+            type: string
+            format: date
+          limiteCredito:
+            type: number
+            format: decimal
+        required:
+        - numeroTarjeta
+        - cvv
+        - fechaExpiracion
+        - limiteCredito
+        
+    TarjetaCreditoResponse:
+      allOf:
+      - $ref: '#/components/schemas/CuentaResponse'
+      - type: object
+        properties:
+          cuentaId:
+            type: string
+            format: uuid
+          numeroTarjeta:
+            type: string
+          cvv:
+            type: string
+          fechaExpiracion:
+            type: string
+            format: date
+          limiteCredito:
+            type: number
+            format: decimal
