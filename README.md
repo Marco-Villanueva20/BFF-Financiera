@@ -1,117 +1,133 @@
-# Proyecto Reto Técnico - Microservicios Financieros
+# Sistema de Gestión Microservicios Financieros
 
-Este proyecto consiste en una arquitectura de microservicios diseñada para gestionar clientes y sus productos financieros (cuentas de ahorro y tarjetas de crédito). Utiliza un enfoque reactivo y moderno con Spring Boot 3 y Spring WebFlux.
+[![Java Version](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.10%20%2F%204.0.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Reactive](https://img.shields.io/badge/Stack-Reactive%20(WebFlux)-blue.svg)](https://projectreactor.io/)
 
-## Arquitectura del Sistema
+Este proyecto es una arquitectura de microservicios robusta y moderna diseñada para la gestión integral de clientes y sus productos financieros (Cuentas de Ahorro y Tarjetas de Crédito). El sistema implementa patrones de diseño avanzados como **BFF (Backend For Frontend)**, programación reactiva, y seguridad basada en **OAuth2**.
 
-El sistema está compuesto por los siguientes módulos:
+---
 
-1.  **`server-oauth` (Puerto 9000):** Servidor de autorización basado en Spring Authorization Server. Gestiona la autenticación y emisión de tokens JWT. Utiliza una base de datos PostgreSQL llamada `auth`.
-2.  **`ms-cliente` (Puerto 8082):** Microservicio encargado de la gestión de la información de los clientes. Utiliza programación reactiva con WebFlux y R2DBC para interactuar con la base de datos `reto-tecnico`.
-3.  **`ms-productos-financieros` (Puerto 8083):** Microservicio que gestiona las cuentas de ahorro y tarjetas de crédito de los clientes. También es reactivo y utiliza R2DBC.
-4.  **`ms-bff` (Puerto 8081):** *Backend For Frontend*. Actúa como un agregador que consume datos de `ms-cliente` y `ms-productos-financieros` para ofrecer una vista consolidada al cliente (Resumen de productos).
-5.  **`common-exception`:** Librería compartida para el manejo estandarizado de excepciones en los microservicios.
-6.  **`init-db`:** Contiene los scripts SQL de inicialización para las bases de datos PostgreSQL.
+## 🏛️ Arquitectura del Sistema
 
-### Diagrama de Flujo Lógico
+El sistema utiliza una arquitectura distribuida donde cada componente tiene una responsabilidad única y bien definida:
 
-```text
-[Cliente/Frontend]
-      |
-      |-- (1) Autenticación --> [server-oauth] (JWT)
-      |
-      |-- (2) GET /api/v1/resumen --> [ms-bff]
-                                        |
-                                        |-- (3) GET /api/v1/clientes/usuario/{id} --> [ms-cliente]
-                                        |
-                                        |-- (4) GET /api/v1/productos/cliente/{id} --> [ms-productos-financieros]
+```mermaid
+graph TD
+    A[Cliente / Frontend] -->|JWT Auth| B[ms-bff]
+    B --> C[ms-cliente]
+    B --> D[ms-productos-financieros]
+    A -->|Login/Register| E[server-oauth]
+    C --> F[(PostgreSQL: reto-tecnico)]
+    D --> F
+    E --> G[(PostgreSQL: auth)]
+    B -.-> H[Zipkin / Distributed Tracing]
+    C -.-> H
+    D -.-> H
 ```
 
-## Tecnologías Utilizadas
+### Componentes Principales
 
--   **Java 17**
--   **Spring Boot 3.5.10 / 4.0.1**
--   **Spring WebFlux** (Programación Reactiva)
--   **Spring Security & OAuth2** (Resource Server & Authorization Server)
--   **R2DBC** (Acceso a datos reactivo)
--   **PostgreSQL**
--   **Docker & Docker Compose**
--   **Maven**
--   **Lombok**
--   **MapStruct**
--   **Zipkin / Micrometer Tracing** (Trazabilidad distribuida)
--   **OpenAPI / Swagger**
+1.  **`server-oauth` (Puerto 9000)**: Servidor de autorización basado en Spring Authorization Server. Gestiona el ciclo de vida de los usuarios, roles y la emisión de tokens JWT.
+2.  **`ms-bff` (Puerto 8081)**: Actúa como punto de entrada único para las aplicaciones cliente. Orquestra y agrega datos de múltiples microservicios para optimizar la comunicación del frontend.
+3.  **`ms-cliente` (Puerto 8082)**: Gestiona la información demográfica y de usuario de los clientes. Utiliza stack reactivo puro.
+4.  **`ms-productos-financieros` (Puerto 8083)**: Administra el catálogo y estado de productos (cuentas y tarjetas).
+5.  **`common-exception`**: Librería compartida que estandariza el manejo de errores en todo el ecosistema.
 
-## Requisitos Previos
+---
 
--   Docker y Docker Compose instalados.
--   Java 17 instalado.
--   Maven instalado (o usar el `mvnw` incluido).
+## 🚀 Tecnologías y Frameworks
 
-## Configuración y Ejecución
+-   **Core**: Java 17, Spring Boot 3.5.10 (Microservicios) y 4.0.1 (OAuth Server).
+-   **Reactividad**: Spring WebFlux, Project Reactor.
+-   **Persistencia**: R2DBC (Acceso reactivo a base de datos), Spring Data JPA (OAuth Server).
+-   **Base de Datos**: PostgreSQL 15+.
+-   **Seguridad**: Spring Security OAuth2 (Authorization & Resource Server), JWT.
+-   **Documentación**: OpenAPI 3.0, Swagger UI.
+-   **Observabilidad**: Micrometer Tracing, Zipkin.
+-   **Herramientas**: Maven, Docker, Lombok, MapStruct.
 
-### 1. Levantar la Base de Datos
+---
 
-El proyecto utiliza Docker Compose para levantar una instancia de PostgreSQL con las bases de datos necesarias configuradas automáticamente.
+## 🛠️ Configuración y Despliegue
 
+### Requisitos Previos
+- Docker & Docker Compose
+- Java 17
+- Maven 3.8+
+
+### Paso 1: Infraestructura de Base de Datos
+Levante el contenedor de PostgreSQL que inicializa automáticamente las bases de datos `auth` y `reto-tecnico`:
 ```bash
 docker compose up -d
 ```
 
-Esto ejecutará los scripts en `./init-db` para crear las bases de datos `auth` y `reto-tecnico` junto con sus tablas.
-
-### 2. Construir los Proyectos
-
-Desde la raíz del proyecto, puedes construir todos los módulos (si hubiera un pom padre, pero aquí parece que son proyectos independientes):
-
-```bash
-# En cada carpeta de microservicio:
-./mvnw clean install
-```
-
-*Nota: Asegúrate de instalar primero `common-exception` ya que es una dependencia de otros módulos.*
-
+### Paso 2: Instalación de Dependencias Compartidas
+Debe instalar localmente la librería de excepciones antes de compilar los microservicios:
 ```bash
 cd common-exception
-mvn install
+mvn clean install
+cd ..
 ```
 
-### 3. Ejecutar los Microservicios
+### Paso 3: Compilación y Ejecución
+Ejecute los microservicios en el siguiente orden recomendado:
 
-Debes ejecutar cada microservicio en el siguiente orden preferido:
+1. **OAuth Server**:
+   ```bash
+   cd server-oauth && ./mvnw spring-boot:run
+   ```
+2. **Microservicios de Negocio**:
+   ```bash
+   cd ms-cliente && ./mvnw spring-boot:run
+   cd ms-productos-financieros && ./mvnw spring-boot:run
+   ```
+3. **BFF**:
+   ```bash
+   cd ms-bff && ./mvnw spring-boot:run
+   ```
 
-1.  **server-oauth**: `cd server-oauth && ./mvnw spring-boot:run`
-2.  **ms-cliente**: `cd ms-cliente && ./mvnw spring-boot:run`
-3.  **ms-productos-financieros**: `cd ms-productos-financieros && ./mvnw spring-boot:run`
-4.  **ms-bff**: `cd ms-bff && ./mvnw spring-boot:run`
+---
 
-## Funcionamiento Detallado
+## 🔐 Seguridad y Flujo de Datos
 
-### Autenticación
-El `server-oauth` emite un token JWT. Este token contiene un claim personalizado `uuid` que está encriptado. El `ms-bff` recibe este token, desencripta el `uuid` (que corresponde al ID de usuario de autenticación) y lo usa para consultar la información del cliente.
+### Proceso de Autenticación
+1. El usuario se registra en `/auth/register` del `server-oauth`.
+2. Solicita un token en `/oauth2/token`.
+3. El token generado contiene un claim `uuid` encriptado.
 
-### BFF (Backend For Frontend)
-El endpoint principal del BFF es `GET /api/v1/resumen`.
-Este endpoint realiza lo siguiente:
-1. Valida el token JWT.
-2. Desencripta el ID de usuario.
-3. Consulta al `ms-cliente` para obtener los datos básicos del cliente.
-4. Con el ID interno del cliente, consulta al `ms-productos-financieros` para obtener la lista de sus productos.
-5. Devuelve un objeto JSON consolidado.
+### Flujo del BFF (`/api/v1/resumen`)
+El BFF implementa una lógica de agregación inteligente:
+1. Extrae y desencripta el `uuid` del token JWT.
+2. Consulta de forma reactiva al `ms-cliente` usando el `uuid`.
+3. Con el ID interno obtenido, consulta al `ms-productos-financieros`.
+4. Combina ambas respuestas en un único objeto consolidado.
 
-### Trazabilidad
-El sistema está configurado para enviar trazas a Zipkin (por defecto en `http://localhost:9411`). Esto permite seguir una petición desde el BFF hasta los microservicios de backend.
+---
 
-## Endpoints Principales
+## 📑 Documentación de la API
 
--   **BFF Resumen:** `GET http://localhost:8081/api/v1/resumen`
--   **Clientes:** `GET/POST http://localhost:8082/api/v1/clientes`
--   **Cuentas de Ahorro:** `GET/POST http://localhost:8083/cuentas-ahorro`
--   **Tarjetas de Crédito:** `GET/POST http://localhost:8083/tarjeta-credito`
--   **OAuth Token:** `POST http://localhost:9000/oauth2/token`
+| Microservicio | Base Path | Swagger UI |
+| :--- | :--- | :--- |
+| **ms-bff** | `/api/v1/resumen` | N/A (Aggregator) |
+| **ms-cliente** | `/api/v1/clientes` | `http://localhost:8082/webjars/swagger-ui/index.html` |
+| **ms-productos** | `/api/v1` | `http://localhost:8083/swagger-ui.html` |
+| **server-oauth** | `/` | Endpoints de Auth |
 
-## Documentación API
+### Endpoints Relevantes
+- `POST /oauth2/token`: Obtención de Bearer Token.
+- `GET /api/v1/resumen`: Resumen consolidado del cliente.
+- `GET /api/v1/clientes/usuario/{userId}`: Datos de cliente por ID de usuario.
+- `GET /api/v1/cuentas-ahorro/{clienteId}`: Cuentas de ahorro por cliente.
 
-Cada microservicio (ms-cliente y ms-productos-financieros) tiene integrado Swagger UI para explorar la API:
--   `http://localhost:8082/swagger-ui.html`
--   `http://localhost:8083/swagger-ui.html`
+---
+
+## 📡 Trazabilidad Distribuida
+
+El sistema integra **Zipkin** para el rastreo de peticiones. Puede visualizar el flujo de una petición a través de los microservicios accediendo a:
+🔗 **[http://localhost:9411](http://localhost:9411)**
+
+Las trazas permiten identificar latencias y fallos en la cadena de llamadas entre el BFF y los servicios de backend.
+
+---
+© 2024 Proyecto Reto Técnico - Microservicios Financieros.
